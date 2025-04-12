@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+    <title>薛定谔的猫🐱</title>
+    <style>
+        body {
+            background: #1a1a1a;
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M50,20 L60,40 L80,45 L65,60 L70,80 L50,70 L30,80 L35,60 L20,45 L40,40 Z" fill="white" opacity="0.3"/><path d="M50,30 L55,40 L65,43 L55,50 L58,60 L50,55 L42,60 L45,50 L35,43 L45,40 Z" fill="white" opacity="0.3"/></svg>');
+            background-size: 200px;
+            background-repeat: repeat;
+            opacity: 0.3;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 1.5rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            letter-spacing: -0.5px;
+            position: relative;
+        }
+
+        .title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 3px;
+            background: linear-gradient(90deg, #ff6b6b, #ff8e8e);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #b3b3b3;
+            margin-bottom: 3rem;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .assistant-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2.5rem;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .assistant-card {
+            background: rgba(30, 30, 30, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 2.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .assistant-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #ff6b6b, #ff8e8e);
+            border-radius: 4px 4px 0 0;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .assistant-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 107, 107, 0.3);
+        }
+
+        .assistant-card:hover::before {
+            opacity: 1;
+        }
+
+        .assistant-icon {
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            color: #ff6b6b;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+        }
+
+        .assistant-name {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #ffffff;
+            letter-spacing: -0.5px;
+        }
+
+        .assistant-description {
+            color: #b3b3b3;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+            font-size: 1.1rem;
+            font-weight: 400;
+        }
+
+        .chat-container {
+            display: none;
+            background: rgba(30, 30, 30, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chat-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #ff6b6b, #ff8e8e);
+            border-radius: 4px 4px 0 0;
+        }
+
+        .chat-messages {
+            height: 400px;
+            overflow-y: auto;
+            padding: 2rem;
+            background-color: transparent;
+            border-radius: 24px;
+            margin-top: 4rem;
+        }
+
+        .message {
+            margin-bottom: 1.5rem;
+            padding: 1.2rem 1.5rem;
+            border-radius: 20px;
+            max-width: 80%;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            position: relative;
+            font-size: 1.1rem;
+            line-height: 1.5;
+        }
+
+        .message.user {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.bot {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            margin-right: auto;
+            border-bottom-left-radius: 4px;
+        }
+
+        .chat-input {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            padding: 0 2rem 2rem;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 1rem 1.5rem;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            transition: all 0.3s ease;
+            font-size: 1.1rem;
+        }
+
+        .chat-input input:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.2);
+            border-color: rgba(255, 107, 107, 0.3);
+        }
+
+        .chat-input button {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+            color: white;
+            padding: 1rem 1.8rem;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .chat-input button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(255, 107, 107, 0.3);
+        }
+
+        .back-button {
+            position: fixed;
+            top: 2rem;
+            left: 2rem;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(255, 107, 107, 0.3);
+        }
+
+        .blind-box-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            visibility: hidden;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .blind-box-container.show {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .blind-box {
+            width: 20vw;
+            min-width: 200px;
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+            border-radius: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transform: scale(0);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .blind-box.show {
+            transform: scale(1);
+        }
+
+        .blind-box:hover {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        .blind-box-content {
+            text-align: center;
+            color: white;
+        }
+
+        .blind-box-content i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+        }
+
+        .blind-box-content p {
+            font-size: 1.2rem;
+            font-weight: 500;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+        }
+
+        .menu-container {
+            display: none;
+            background: rgba(30, 30, 30, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .drink-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .drink-card {
+            background: rgba(30, 30, 30, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .drink-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 107, 107, 0.3);
+        }
+
+        .drink-image-container {
+            position: relative;
+            width: 100%;
+            height: 250px;
+            overflow: hidden;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .drink-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .drink-image:hover {
+            transform: scale(1.1);
+        }
+
+        .drink-content {
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            justify-content: space-between;
+        }
+
+        .drink-info {
+            flex: 1;
+        }
+
+        .drink-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 0.5rem;
+            line-height: 1.2;
+            height: 3.6rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .drink-price {
+            font-size: 1.2rem;
+            color: #ff6b6b;
+            margin-bottom: 1rem;
+        }
+
+        .drink-description {
+            color: #b3b3b3;
+            margin-bottom: 1rem;
+            line-height: 1.6;
+            height: 4.8rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .drink-fortune {
+            color: #ff8e8e;
+            font-style: italic;
+            margin-bottom: 1rem;
+            padding: 0.8rem;
+            background: rgba(255, 107, 107, 0.1);
+            border-radius: 12px;
+            height: 4rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .button-container {
+            margin-top: auto;
+        }
+
+        .add-to-order {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            font-weight: 500;
+            width: 100%;
+        }
+
+        .add-to-order:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(255, 107, 107, 0.3);
+        }
+
+        .order-container {
+            display: none;
+            background: rgba(30, 30, 30, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .order-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .order-item:last-child {
+            border-bottom: none;
+        }
+
+        .item-info {
+            flex: 1;
+        }
+
+        .item-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 0.5rem;
+        }
+
+        .item-price {
+            color: #ff6b6b;
+            font-size: 1.1rem;
+        }
+
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .quantity-button {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .quantity-button:hover {
+            background: rgba(255, 107, 107, 0.3);
+        }
+
+        .quantity {
+            color: #ffffff;
+            font-size: 1.2rem;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        .total-section {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            color: #ffffff;
+            font-size: 1.2rem;
+        }
+
+        .total-amount {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #ff6b6b;
+        }
+
+        .table-number {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .table-number input {
+            width: 100%;
+            padding: 0.8rem;
+            background: transparent;
+            border: none;
+            color: #ffffff;
+            font-size: 1.1rem;
+        }
+
+        .table-number input:focus {
+            outline: none;
+        }
+
+        .submit-order {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 30px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
+            font-weight: 500;
+            width: 100%;
+            margin-top: 2rem;
+        }
+
+        .submit-order:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(255, 107, 107, 0.3);
+        }
+
+        .nav-buttons {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .nav-button {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 30px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav-button:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 30px rgba(255, 107, 107, 0.3);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="title text-center">薛定谔的猫🐱</h1>
+        <p class="subtitle">选择一位智能助手，开启您的酒水之旅</p>
+        
+        <div class="assistant-grid" id="assistant-grid">
+            <div class="assistant-card" data-assistant="mixologist">
+                <i class="fas fa-cocktail assistant-icon"></i>
+                <h3 class="assistant-name">调酒师</h3>
+                <p class="assistant-description">专业调酒师，精通各类鸡尾酒调制，能为您推荐最适合的饮品搭配</p>
+            </div>
+            
+            <div class="assistant-card" data-assistant="sommelier">
+                <i class="fas fa-wine-glass-alt assistant-icon"></i>
+                <h3 class="assistant-name">品酒师</h3>
+                <p class="assistant-description">资深品酒师，熟悉各类葡萄酒，能为您提供专业的品鉴建议</p>
+            </div>
+            
+            <div class="assistant-card" data-assistant="bartender">
+                <i class="fas fa-beer assistant-icon"></i>
+                <h3 class="assistant-name">酒保</h3>
+                <p class="assistant-description">经验丰富的酒保，了解各类啤酒和烈酒，能为您推荐最受欢迎的饮品</p>
+            </div>
+            
+            <div class="assistant-card" data-assistant="tea-master">
+                <i class="fas fa-mug-hot assistant-icon"></i>
+                <h3 class="assistant-name">茶艺师</h3>
+                <p class="assistant-description">茶艺大师，精通各类茶饮，能为您推荐最适合的茶饮搭配</p>
+            </div>
+        </div>
+
+        <div id="chat-container" class="chat-container">
+            <button class="back-button" id="back-button">
+                <i class="fas fa-arrow-left"></i> 返回
+            </button>
+            <div class="chat-messages" id="chat-messages"></div>
+            <div class="chat-input">
+                <input type="text" id="user-input" placeholder="输入您的问题...">
+                <button id="send-button">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+
+        <div id="menu-container" class="menu-container">
+            <div class="drink-grid" id="drink-grid">
+                <!-- 饮品卡片将通过JavaScript动态生成 -->
+            </div>
+        </div>
+
+        <div id="order-container" class="order-container">
+            <div id="order-items">
+                <!-- 订单项将通过JavaScript动态生成 -->
+            </div>
+
+            <div class="total-section">
+                <div class="total-row">
+                    <span>小计</span>
+                    <span id="subtotal">¥0</span>
+                </div>
+                <div class="total-row">
+                    <span>服务费</span>
+                    <span>¥0</span>
+                </div>
+                <div class="total-row total-amount">
+                    <span>总计</span>
+                    <span id="total">¥0</span>
+                </div>
+            </div>
+
+            <div class="table-number">
+                <input type="text" id="table-number" placeholder="请输入桌号">
+            </div>
+
+            <button class="submit-order" onclick="submitOrder()">
+                提交订单
+            </button>
+        </div>
+    </div>
+
+    <div class="nav-buttons">
+        <button class="nav-button" id="menu-button" style="display: none;">
+            <i class="fas fa-utensils"></i>
+            查看菜单
+        </button>
+        <button class="nav-button" id="order-button" style="display: none;">
+            <i class="fas fa-shopping-cart"></i>
+            查看订单
+        </button>
+    </div>
+
+    <div id="blind-box-container" class="blind-box-container">
+        <div id="blind-box" class="blind-box">
+            <div class="blind-box-content">
+                <i class="fas fa-gift"></i>
+                <p>点击开启惊喜</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 助手数据
+        const assistants = [
+            {
+                name: "调酒师",
+                icon: "fa-cocktail",
+                description: "专业调酒师，精通各类鸡尾酒调制，能为您推荐最适合的饮品搭配"
+            },
+            {
+                name: "品酒师",
+                icon: "fa-wine-glass-alt",
+                description: "资深品酒师，熟悉各类葡萄酒，能为您提供专业的品鉴建议"
+            },
+            {
+                name: "酒保",
+                icon: "fa-beer",
+                description: "经验丰富的酒保，了解各类啤酒和烈酒，能为您推荐最受欢迎的饮品"
+            },
+            {
+                name: "茶艺师",
+                icon: "fa-mug-hot",
+                description: "茶艺大师，精通各类茶饮，能为您推荐最适合的茶饮搭配"
+            }
+        ];
+
+        // 图片搜索API配置
+        const imageAPIs = {
+            '调酒师': {
+                '梦幻星空特调': 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b',
+                '恋恋气泡': 'https://images.unsplash.com/photo-1536935338788-846bb9981813',
+                '魔法彩虹特调': 'https://images.unsplash.com/photo-1486947799489-3fabdd7d32a6',
+                '默认': 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b'
+            },
+            '品酒师': {
+                '陈年波尔多': 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3',
+                '普罗旺斯桃红': 'https://images.unsplash.com/photo-1553361371-9b22f78e8b1d',
+                '意大利起泡酒': 'https://images.unsplash.com/photo-1558001373-7b93ee48ffa0',
+                '默认': 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3'
+            },
+            '酒保': {
+                '陈年威士忌': 'https://images.unsplash.com/photo-1527281400683-1aae777175f8',
+                '精酿啤酒': 'https://images.unsplash.com/photo-1608270586620-248524c67de9',
+                '果香啤酒': 'https://images.unsplash.com/photo-1618183479302-1e0aa382c36b',
+                '默认': 'https://images.unsplash.com/photo-1527281400683-1aae777175f8'
+            },
+            '茶艺师': {
+                '大红袍': 'https://images.unsplash.com/photo-1576092768241-dec231879fc3',
+                '明前龙井': 'https://images.unsplash.com/photo-1582793988951-9aed5509eb97',
+                '武夷红茶': 'https://images.unsplash.com/photo-1544787219-7f47ccb76574',
+                '默认': 'https://images.unsplash.com/photo-1576092768241-dec231879fc3'
+            }
+        };
+
+        // 饮品库存数据
+        const drinkInventory = {
+            '调酒师': [
+                {
+                    name: "梦幻星空特调",
+                    price: 88,
+                    description: "创新调制的梦幻鸡尾酒，搭配特制装饰，呈现独特视觉效果。",
+                    keywords: ["梦幻", "特调", "鸡尾酒"],
+                    fortune: "繁星点点，每一口都是一场流星雨的邂逅。",
+                    image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b"
+                },
+                {
+                    name: "恋恋气泡",
+                    price: 78,
+                    description: "清新果香与气泡的邂逅，搭配精致装饰，少女心满满。",
+                    keywords: ["清新", "果香", "气泡"],
+                    fortune: "粉红泡泡，让心跳加速的小确幸。",
+                    image: "https://images.unsplash.com/photo-1536935338788-846bb9981813"
+                },
+                {
+                    name: "魔法彩虹特调",
+                    price: 98,
+                    description: "多层渐变的梦幻鸡尾酒，搭配创意装饰，视觉与味觉的双重享受。",
+                    keywords: ["魔法", "彩虹", "特调"],
+                    fortune: "彩虹般绚丽的心情，尽在这一杯中。",
+                    image: "https://images.unsplash.com/photo-1486947799489-3fabdd7d32a6"
+                }
+            ],
+            '品酒师': [
+                {
+                    name: "陈年波尔多",
+                    price: 188,
+                    description: "优雅醇厚的红酒，蕴含黑醋栗与橡木桶的芳香。",
+                    keywords: ["红酒", "波尔多", "陈年"],
+                    fortune: "时光沉淀，成就完美风韵。",
+                    image: "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3"
+                },
+                {
+                    name: "普罗旺斯桃红",
+                    price: 158,
+                    description: "如同普罗旺斯的阳光，清新怡人的桃红葡萄酒。",
+                    keywords: ["桃红", "清新", "葡萄酒"],
+                    fortune: "粉色的浪漫，南法的微醺。",
+                    image: "https://images.unsplash.com/photo-1553361371-9b22f78e8b1d"
+                },
+                {
+                    name: "意大利起泡酒",
+                    price: 128,
+                    description: "来自意大利的清新起泡酒，带有水果与花香。",
+                    keywords: ["起泡酒", "果香", "清新"],
+                    fortune: "气泡中流淌的欢愉时光。",
+                    image: "https://images.unsplash.com/photo-1558001373-7b93ee48ffa0"
+                }
+            ],
+            '酒保': [
+                {
+                    name: "陈年威士忌",
+                    price: 168,
+                    description: "醇厚浓郁的威士忌，搭配冰块或苏打水。",
+                    keywords: ["威士忌", "醇厚", "陈年"],
+                    fortune: "品一口威士忌，感受时光流转。",
+                    image: "https://images.unsplash.com/photo-1527281400683-1aae777175f8"
+                },
+                {
+                    name: "精酿啤酒",
+                    price: 68,
+                    description: "特选精酿啤酒，口感清爽，回味悠长。",
+                    keywords: ["啤酒", "精酿", "清爽"],
+                    fortune: "畅饮精酿，享受生活。",
+                    image: "https://images.unsplash.com/photo-1608270586620-248524c67de9"
+                },
+                {
+                    name: "果香啤酒",
+                    price: 58,
+                    description: "清新水果啤酒，搭配花生小食。",
+                    keywords: ["啤酒", "果香", "清新"],
+                    fortune: "轻松惬意，快乐畅饮。",
+                    image: "https://images.unsplash.com/photo-1618183479302-1e0aa382c36b"
+                }
+            ],
+            '茶艺师': [
+                {
+                    name: "武夷大红袍",
+                    price: 158,
+                    description: "岩韵浓郁的乌龙茶，香气醇厚。",
+                    keywords: ["乌龙茶", "岩茶", "醇厚"],
+                    fortune: "岩壁沉淀，百年茶韵。",
+                    image: "https://images.unsplash.com/photo-1576092768241-dec231879fc3"
+                },
+                {
+                    name: "明前龙井",
+                    price: 138,
+                    description: "清新雅致的绿茶，带有春天的气息。",
+                    keywords: ["绿茶", "清新", "明前"],
+                    fortune: "一口春茶，品味时节。",
+                    image: "https://images.unsplash.com/photo-1582793988951-9aed5509eb97"
+                },
+                {
+                    name: "武夷红茶",
+                    price: 128,
+                    description: "红茶中的极品，香气高扬。",
+                    keywords: ["红茶", "香气", "极品"],
+                    fortune: "茶香四溢，韵味悠长。",
+                    image: "https://images.unsplash.com/photo-1544787219-7f47ccb76574"
+                }
+            ]
+        };
+
+        // 根据对话关键词匹配饮品
+        function matchDrinksWithKeywords(messages) {
+            const extractedKeywords = messages
+                .map(msg => msg.textContent.toLowerCase())
+                .join(' ');
+            
+            const drinks = drinkInventory[currentAssistant];
+            const matchedDrinks = drinks
+                .map(drink => ({
+                    drink,
+                    score: calculateMatchScore(drink, extractedKeywords)
+                }))
+                .sort((a, b) => b.score - a.score)
+                .slice(0, 3)
+                .map(item => item.drink);
+
+            return matchedDrinks;
+        }
+
+        // 计算匹配分数
+        function calculateMatchScore(drink, text) {
+            let score = 0;
+            drink.keywords.forEach(keyword => {
+                if (text.includes(keyword.toLowerCase())) {
+                    score += 1;
+                }
+            });
+            return score;
+        }
+
+        // 显示饮品列表
+        function displayDrinks() {
+            const drinkGrid = document.getElementById('drink-grid');
+            drinkGrid.innerHTML = '';
+
+            // 获取当前角色的默认三款饮品
+            const defaultDrinks = drinkInventory[currentAssistant];
+
+            // 显示饮品卡片
+            defaultDrinks.forEach(drink => {
+                const drinkCard = document.createElement('div');
+                drinkCard.className = 'drink-card';
+                drinkCard.innerHTML = `
+                    <div class="drink-image-container">
+                        <img src="${drink.image}" alt="${drink.name}" class="drink-image" 
+                             onerror="this.src='${imageAPIs[currentAssistant]['默认']}'">
+                    </div>
+                    <div class="drink-content">
+                        <div class="drink-info">
+                            <h3 class="drink-name">${drink.name}</h3>
+                            <p class="drink-price">¥${drink.price}</p>
+                            <p class="drink-description">${drink.description}</p>
+                            <p class="drink-fortune">${drink.fortune}</p>
+                        </div>
+                        <div class="button-container">
+                            <button class="add-to-order" onclick="addToOrder('${drink.name}', ${drink.price})">
+                                加入订单
+                            </button>
+                        </div>
+                    </div>
+                `;
+                drinkGrid.appendChild(drinkCard);
+            });
+        }
+
+        // 添加到订单
+        function addToOrder(name, price) {
+            let order = JSON.parse(localStorage.getItem('order') || '[]');
+            const existingItem = order.find(item => item.name === name);
+            
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                order.push({
+                    name: name,
+                    price: price,
+                    quantity: 1
+                });
+            }
+            
+            localStorage.setItem('order', JSON.stringify(order));
+            alert(`${name} 已添加到订单！`);
+        }
+
+        // 显示订单
+        function displayOrder() {
+            const order = JSON.parse(localStorage.getItem('order') || '[]');
+            const orderItems = document.getElementById('order-items');
+            orderItems.innerHTML = '';
+
+            let subtotal = 0;
+
+            order.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                subtotal += itemTotal;
+
+                const orderItem = document.createElement('div');
+                orderItem.className = 'order-item';
+                orderItem.innerHTML = `
+                    <div class="item-info">
+                        <div class="item-name">${item.name}</div>
+                        <div class="item-price">¥${item.price}</div>
+                    </div>
+                    <div class="quantity-controls">
+                        <button class="quantity-button" onclick="updateQuantity('${item.name}', ${item.quantity - 1})">-</button>
+                        <span class="quantity">${item.quantity}</span>
+                        <button class="quantity-button" onclick="updateQuantity('${item.name}', ${item.quantity + 1})">+</button>
+                    </div>
+                `;
+                orderItems.appendChild(orderItem);
+            });
+
+            document.getElementById('subtotal').textContent = `¥${subtotal}`;
+            document.getElementById('total').textContent = `¥${subtotal}`;
+        }
+
+        // 更新数量
+        function updateQuantity(name, newQuantity) {
+            if (newQuantity < 0) return;
+
+            const order = JSON.parse(localStorage.getItem('order') || '[]');
+            const item = order.find(item => item.name === name);
+
+            if (item) {
+                if (newQuantity === 0) {
+                    const index = order.indexOf(item);
+                    order.splice(index, 1);
+                } else {
+                    item.quantity = newQuantity;
+                }
+            }
+
+            localStorage.setItem('order', JSON.stringify(order));
+            displayOrder();
+        }
+
+        // 提交订单
+        function submitOrder() {
+            const tableNumber = document.getElementById('table-number').value.trim();
+            if (!tableNumber) {
+                alert('请输入桌号');
+                return;
+            }
+
+            const order = JSON.parse(localStorage.getItem('order') || '[]');
+            if (order.length === 0) {
+                alert('订单为空');
+                return;
+            }
+
+            const total = order.reduce((sum, item) => sum + item.price * item.quantity, 0);
+            alert(`订单已提交！\n桌号：${tableNumber}\n总价：¥${total}`);
+
+            // 清空订单
+            localStorage.removeItem('order');
+            
+            // 返回首页
+            document.getElementById('assistant-grid').style.display = 'grid';
+            document.getElementById('chat-container').style.display = 'none';
+            document.getElementById('menu-container').style.display = 'none';
+            document.getElementById('order-container').style.display = 'none';
+            document.getElementById('menu-button').style.display = 'none';
+            document.getElementById('order-button').style.display = 'none';
+        }
+
+        // 盲盒点击事件
+        document.getElementById('blind-box').addEventListener('click', () => {
+            showMenu();
+            document.getElementById('blind-box-container').classList.remove('show');
+            document.getElementById('blind-box').classList.remove('show');
+        });
+
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', () => {
+            // 显示助手卡片
+            const assistantGrid = document.getElementById('assistant-grid');
+            assistantGrid.innerHTML = assistants.map(assistant => `
+                <div class="assistant-card" data-assistant="${assistant.name}">
+                    <i class="fas ${assistant.icon} assistant-icon"></i>
+                    <h3 class="assistant-name">${assistant.name}</h3>
+                    <p class="assistant-description">${assistant.description}</p>
+                </div>
+            `).join('');
+
+            // 添加助手卡片点击事件
+            document.querySelectorAll('.assistant-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const assistantName = card.getAttribute('data-assistant');
+                    selectAssistant(assistantName);
+                });
+            });
+
+            // 添加返回按钮点击事件
+            document.getElementById('back-button').addEventListener('click', () => {
+                document.getElementById('assistant-grid').style.display = 'grid';
+                document.getElementById('chat-container').style.display = 'none';
+                document.getElementById('menu-container').style.display = 'none';
+                document.getElementById('order-container').style.display = 'none';
+                document.getElementById('menu-button').style.display = 'none';
+                document.getElementById('order-button').style.display = 'none';
+            });
+
+            // 添加发送按钮点击事件
+            document.getElementById('send-button').addEventListener('click', sendMessage);
+
+            // 添加输入框回车事件
+            document.getElementById('user-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+
+            // 添加导航按钮点击事件
+            document.getElementById('menu-button').addEventListener('click', showMenu);
+            document.getElementById('order-button').addEventListener('click', showOrder);
+        });
+
+        let currentAssistant = '';
+        let messageCount = 0;
+
+        // 选择助手
+        function selectAssistant(name) {
+            document.getElementById('assistant-grid').style.display = 'none';
+            document.getElementById('chat-container').style.display = 'block';
+            document.getElementById('menu-container').style.display = 'none';
+            document.getElementById('order-container').style.display = 'none';
+            document.getElementById('menu-button').style.display = 'none';
+            document.getElementById('order-button').style.display = 'none';
+            
+            currentAssistant = name;
+            messageCount = 0;
+            
+            // 定义每个角色的三句对话
+            const dialogueSequence = {
+                '调酒师': [
+                    '(开心地蹦跳) 欧尼酱~我是可爱的调酒师,很高兴为您服务哦!',
+                    '(俏皮地转圈) 欧尼酱看起来好可爱呢~让咱家猜猜您今天的心情如何?',
+                    '(比出小爱心) 欧尼酱要不要试试咱家的招牌"梦幻星空特调"?加入了闪粉和蓝柑橘力娇酒,喝下去整个人都会发光呢✨'
+                ],
+                '品酒师': [
+                    '(优雅地欠身) 欧尼酱好~我是专业的品酒师,让我带您进入葡萄酒的奇妙世界吧!',
+                    '(轻轻整理裙摆) 欧尼酱今天打扮得真漂亮呢~像是春天里最美丽的花朵~',
+                    '(开心地转圈) 欧尼酱不如先尝尝这支2015年的波尔多红酒?带着黑醋栗和玫瑰花香,超级浪漫的!'
+                ],
+                '酒保': [
+                    '(活力满满地挥手) 欧尼酱来啦~我是元气满满的酒保,准备好来一场开心的畅饮了吗?',
+                    '(俏皮地眨眼) 欧尼酱看起来今天心情不错呢~是遇到什么开心的事了吗?',
+                    '(眨眨眼睛) 先来一杯"陈年威士忌"怎么样?咱家特别推荐配冰块或苏打水,超解压的哦~'
+                ],
+                '茶艺师': [
+                    '(温柔地微笑) 欧尼酱您好~我是茶艺师,让我为您献上一杯清雅的茶饮吧!',
+                    '(优雅地整理衣袖) 欧尼酱身上有一种淡淡的优雅气质呢~让咱家想起了晨露中的茉莉花~',
+                    '(优雅地斟茶) 不如先品尝这款"武夷大红袍"?岩韵醇厚,回甘悠长,是咱家的珍藏哦!'
+                ]
+            };
+
+            // 发送第一句开场白
+            addMessage(dialogueSequence[name][0], 'bot');
+        }
+
+        // 获取助手回复
+        async function getAssistantResponse(message) {
+            try {
+                const sentiment = analyzeSentimentLocally(message);
+                const responses = {
+                    '调酒师': {
+                        positive: [
+                            '(开心地蹦跳) 欧尼酱~要不要试试萝莉の秘密特调？加入了闪粉的鸡尾酒，喝下去整个人都会发光呢✨',
+                            '(俏皮地转圈圈) 呜呜~太棒啦！让我为您调制一杯"恋爱气泡"，粉粉的颜色超可爱的说！💕',
+                            '(比出小爱心) 欧尼酱真懂呢！这杯"魔法少女特饮"我加了棉花糖和爱心糖片，可爱到爆炸啦~🦄'
+                        ],
+                        negative: [
+                            '(委屈地噘嘴) 呜...不合欧尼酱口味吗？让咱家变个魔法，调制"心情治愈特调"，加入蝶豆花会变色的哦！',
+                            '(担心地摇头) 啊啦~是咱家考虑不周到了呢。要试试"彩虹心情杯"吗？七层渐变色超梦幻的！',
+                            '(眼泪汪汪) 对不起啦欧尼酱~让咱家重新调制一杯"魔法少女特饮"，保证让您露出笑容！'
+                        ],
+                        neutral: [
+                            '(神秘地眨眼) 欧尼酱~今天的幸运饮品是..."星星魔法特调"！杯子上还有小星星装饰呢✨',
+                            '(开心地摇晃调酒器) 让咱家为欧尼酱调制一杯"梦幻泡泡"，喝下去嘴巴会亮晶晶的哦~',
+                            '(蹦蹦跳跳) 欧尼酱要试试咱家的新品"独角兽の泪"吗？杯壁上有彩虹糖装饰呢！'
+                        ]
+                    },
+                    '品酒师': {
+                        positive: [
+                            '(优雅地欠身) 欧尼酱懂得真多呢~这款2015年的波尔多，香气像是晚霞中的玫瑰花园，要尝尝看吗？',
+                            '(轻轻晃动酒杯) 呜~欧尼酱的品味真是太棒了！这支勃艮第带着春天的气息，喝一口就能感受到爱情的味道...',
+                            '(开心地转圈) 太棒啦！欧尼酱懂得真多！这支普罗旺斯玫瑰酒，就像是恋爱的味道呢~'
+                        ],
+                        negative: [
+                            '(担心地歪头) 呜...欧尼酱心情不好吗？让咱家为您挑选一款温柔的桃红葡萄酒，甜甜的很治愈哦...',
+                            '(轻轻抿嘴) 不要难过啦~这款意大利起泡酒，气泡像是快乐的小精灵，一定能让欧尼酱开心起来！',
+                            '(眨巴眼睛) 欧尼酱~让咱家用这支微醺的莫斯卡托，带走您所有的烦恼吧！'
+                        ],
+                        neutral: [
+                            '(俏皮地转动酒杯) 欧尼酱~今晚的推荐是来自南澳的精灵之泪，喝一口就能感受到星空的魔力哦！',
+                            '(神秘地眨眼) 要不要试试这支独角兽之吻？带着魔法般的果香，超级梦幻的！',
+                            '(开心地跳跃) 欧尼酱看这个！这款琥珀色的橙酒，喝下去整个人都会发光呢~'
+                        ]
+                    },
+                    '酒保': {
+                        positive: [
+                            '(开心地擦杯子) 欧尼酱今天心情不错呢！来杯"元气满满特调"，喝了会变得更可爱哦！',
+                            '(俏皮地抛酒瓶) 呜呜~欧尼酱真懂！要不要试试"幸运星星特饮"？会带来好运的说！',
+                            '(比出胜利手势) 欧尼酱最棒了！来一杯"彩虹幸福水"，保证甜甜的超治愈！'
+                        ],
+                        negative: [
+                            '(担心地歪头) 欧尼酱是不是遇到困难了？来杯"魔法治愈水"，喝完烦恼就会消失不见！',
+                            '(轻轻拍手) 不要伤心啦~这杯"开心果汁"加了特制糖浆，甜度和欧尼酱一样呢！',
+                            '(眨眨眼睛) 欧尼酱~让咱家的"元气复活特调"，治愈您的心情吧！'
+                        ],
+                        neutral: [
+                            '(神秘地摇晃调酒器) 欧尼酱要来点特别的吗？这款"魔法星星水"，喝了会带来好运哦！',
+                            '(开心地哼歌) 为欧尼酱特制的"幸运草特调"，据说能实现一个愿望呢~',
+                            '(蹦蹦跳跳) 欧尼酱快看！这杯"彩虹梦幻水"，喝完整个人都会闪闪发光！'
+                        ]
+                    },
+                    '茶艺师': {
+                        positive: [
+                            '(优雅地捧茶) 欧尼酱真是懂茶呢~这壶大红袍，香气像是仙境的花园，要一起品尝吗？',
+                            '(轻轻摆弄茶具) 呜~欧尼酱的品味真是太棒了！这款碧螺春带着春天的气息，喝一口就能感受到幸福...',
+                            '(开心地斟茶) 太棒啦！欧尼酱懂得真多！这壶武夷岩茶，就像是仙女的眼泪一样珍贵呢~'
+                        ],
+                        negative: [
+                            '(担心地歪头) 呜...欧尼酱心情不好吗？让咱家为您泡一壶温柔的铁观音，甘甜的回味会治愈您的心情...',
+                            '(轻轻抿嘴) 不要难过啦~这款白毫银针，清淡中带着甜意，就像是小天使的羽毛一样温柔！',
+                            '(眨巴眼睛) 欧尼酱~让咱家用这壶龙井茶，带走您所有的烦恼吧！'
+                        ],
+                        neutral: [
+                            '(俏皮地摆弄茶盏) 欧尼酱~今天为您推荐一款魔法普洱，喝一口就能感受到时光的魔力哦！',
+                            '(神秘地眨眼) 要不要试试这壶仙女の泪？带着云雾的仙气，超级梦幻的！',
+                            '(开心地跳跃) 欧尼酱看这个！这款金骏眉，喝下去整个人都会变得优雅呢~'
+                        ]
+                    }
+                };
+
+                // 获取当前角色的回复列表
+                const currentResponses = responses[currentAssistant][sentiment];
+                
+                // 根据对话次数返回固定的回复
+                return currentResponses[messageCount];
+            } catch (error) {
+                console.error('Error in getAssistantResponse:', error);
+                return '让咱家为欧尼酱推荐一款特别的饮品吧~';
+            }
+        }
+
+        // 本地情感分析函数
+        function analyzeSentimentLocally(text) {
+            const positiveKeywords = ['好', '喜欢', '棒', '赞', '不错', '满意', '美味', '好喝', '推荐', '喜欢', '爱', '棒极了', '太棒了', '完美', '惊艳', '期待', '开心', '快乐', '温暖', '感动'];
+            const negativeKeywords = ['差', '不喜欢', '难喝', '贵', '失望', '难吃', '不好', '糟糕', '差劲', '难喝', '贵', '贵了', '太贵', '不值', '失望', '伤心', '难过', '压力', '烦恼', '累'];
+            
+            if (positiveKeywords.some(keyword => text.includes(keyword))) {
+                return 'positive';
+            } else if (negativeKeywords.some(keyword => text.includes(keyword))) {
+                return 'negative';
+            }
+            return 'neutral';
+        }
+
+        // 发送消息
+        async function sendMessage() {
+            const input = document.getElementById('user-input');
+            const message = input.value.trim();
+            
+            if (message) {
+                addMessage(message, 'user');
+                input.value = '';
+                
+                try {
+                    // 获取助手回复
+                    const response = await getAssistantResponse(message);
+                    addMessage(response, 'bot');
+                    
+                    messageCount++;
+                    if (messageCount >= 3) {
+                        showBlindBox();
+                    }
+                } catch (error) {
+                    console.error('Error getting response:', error);
+                    addMessage('抱歉，我遇到了一些问题，请稍后再试。', 'bot');
+                }
+            }
+        }
+
+        // 添加消息
+        function addMessage(text, sender) {
+            const messages = document.getElementById('chat-messages');
+            const message = document.createElement('div');
+            message.className = `message ${sender}`;
+            message.textContent = text;
+            messages.appendChild(message);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        // 显示盲盒
+        function showBlindBox() {
+            const blindBoxContainer = document.getElementById('blind-box-container');
+            blindBoxContainer.classList.add('show');
+            setTimeout(() => {
+                const blindBox = document.getElementById('blind-box');
+                blindBox.classList.add('show');
+            }, 100);
+        }
+
+        // 显示菜单
+        function showMenu() {
+            document.getElementById('assistant-grid').style.display = 'none';
+            document.getElementById('chat-container').style.display = 'none';
+            document.getElementById('menu-container').style.display = 'block';
+            document.getElementById('order-container').style.display = 'none';
+            document.getElementById('menu-button').style.display = 'none';
+            document.getElementById('order-button').style.display = 'block';
+            displayDrinks();
+        }
+
+        // 显示订单
+        function showOrder() {
+            document.getElementById('assistant-grid').style.display = 'none';
+            document.getElementById('chat-container').style.display = 'none';
+            document.getElementById('menu-container').style.display = 'none';
+            document.getElementById('order-container').style.display = 'block';
+            document.getElementById('menu-button').style.display = 'block';
+            document.getElementById('order-button').style.display = 'none';
+            displayOrder();
+        }
+    </script>
+</body>
+
+</html>
+    
+    
